@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.DS_Store
+deploy/data/jobs
+deploy/docker.env
+public/download
+.env
+.env.*
+*.pem
+npm-debug.log
+yarn-error.log

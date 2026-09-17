@@ -1,0 +1,10 @@
+services:
+  app:
+    cpus: 1.0
+    environment:
+      BIOCLUSTER_SSH_KEY_PATH: /run/secrets/biocluster_key
+    volumes:
+      - ${BIOCLUSTER_KEY_FILE:?set BIOCLUSTER_KEY_FILE}:/run/secrets/biocluster_key:ro,Z
+
+  gateway:
+    cpus: 0.25

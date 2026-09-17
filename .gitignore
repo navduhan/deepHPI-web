@@ -1,0 +1,14 @@
+.next
+node_modules
+.DS_Store
+.env
+.env.local
+deploy/data/jobs
+/deploy/docker.env
+/deploy/data/jobs/*
+!/deploy/data/jobs/.gitignore
+/public/download/
+__pycache__/
+*.pyc
+*.tsbuildinfo
+next-env.d.ts

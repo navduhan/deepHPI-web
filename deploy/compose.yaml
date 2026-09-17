@@ -1,0 +1,106 @@
+name: deephpi
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:?set TURNSTILE_SITE_KEY}
+        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-/deepHPI}
+    image: deephpi-web:1.0
+    container_name: deephpi-web
+    user: "${DOCKER_UID:-1000}:${DOCKER_GID:-1000}"
+    restart: unless-stopped
+    expose: ["3220"]
+    environment:
+      PORT: "3220"
+      HOSTNAME: "0.0.0.0"
+      NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-/deepHPI}
+      BIOCLUSTER_HOST: ${BIOCLUSTER_HOST:?set BIOCLUSTER_HOST}
+      BIOCLUSTER_PORT: ${BIOCLUSTER_PORT:-22}
+      BIOCLUSTER_USER: ${BIOCLUSTER_USER:?set BIOCLUSTER_USER}
+      BIOCLUSTER_HOST_KEY_SHA256: ${BIOCLUSTER_HOST_KEY_SHA256:?set BIOCLUSTER_HOST_KEY_SHA256}
+      BIOCLUSTER_REMOTE_SCRIPT: ${BIOCLUSTER_REMOTE_SCRIPT:?set BIOCLUSTER_REMOTE_SCRIPT}
+      BIOCLUSTER_REMOTE_TMP_DIR: ${BIOCLUSTER_REMOTE_TMP_DIR:?set BIOCLUSTER_REMOTE_TMP_DIR}
+      PREDICTION_JOB_DIR: /app/data/jobs
+      PREDICTION_JOB_RETENTION_MS: ${PREDICTION_JOB_RETENTION_MS:-2592000000}
+      SSH_KEEPALIVE_INTERVAL_MS: ${SSH_KEEPALIVE_INTERVAL_MS:-15000}
+      SSH_KEEPALIVE_COUNT_MAX: ${SSH_KEEPALIVE_COUNT_MAX:-4}
+      PREDICTION_MAX_ACTIVE_JOBS: ${PREDICTION_MAX_ACTIVE_JOBS:-10}
+      PREDICTION_MAX_ACTIVE_JOBS_PER_CLIENT: ${PREDICTION_MAX_ACTIVE_JOBS_PER_CLIENT:-2}
+      MAX_REQUEST_BODY_BYTES: ${MAX_REQUEST_BODY_BYTES:-4194304}
+      MAX_ACCESSION_COUNT: ${MAX_ACCESSION_COUNT:-100}
+      MAX_ACCESSION_LENGTH: ${MAX_ACCESSION_LENGTH:-64}
+      PREDICTION_MAX_SEQUENCES_PER_SIDE: ${PREDICTION_MAX_SEQUENCES_PER_SIDE:-500}
+      PREDICTION_MAX_SEQUENCE_LENGTH: ${PREDICTION_MAX_SEQUENCE_LENGTH:-50000}
+      PREDICTION_MAX_RESIDUES: ${PREDICTION_MAX_RESIDUES:-2000000}
+      PREDICTION_MAX_CANDIDATE_PAIRS: ${PREDICTION_MAX_CANDIDATE_PAIRS:-10000}
+      TURNSTILE_REQUIRED: ${TURNSTILE_REQUIRED:-true}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:?set TURNSTILE_SECRET_KEY}
+      JOB_OWNER_HMAC_SECRET: ${JOB_OWNER_HMAC_SECRET:?set JOB_OWNER_HMAC_SECRET}
+      DEEPHPI_APP_URL: ${DEEPHPI_APP_URL:-}
+      DEEPHPI_MAIL_FROM: ${DEEPHPI_MAIL_FROM:-}
+      DEEPHPI_SMTP_HOST: ${DEEPHPI_SMTP_HOST:-}
+      DEEPHPI_SMTP_PORT: ${DEEPHPI_SMTP_PORT:-587}
+      DEEPHPI_SMTP_USER: ${DEEPHPI_SMTP_USER:-}
+      DEEPHPI_SMTP_PASS: ${DEEPHPI_SMTP_PASS:-}
+      DEEPHPI_SMTP_TLS: ${DEEPHPI_SMTP_TLS:-true}
+      DEEPHPI_SMTP_SSL: ${DEEPHPI_SMTP_SSL:-false}
+    volumes:
+      - ../public/download:/app/public/download:ro,Z
+      - ./data/jobs:/app/data/jobs:Z
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 100
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 2048
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    mem_limit: 1g
+    networks: [frontend, egress]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3220/deepHPI').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  gateway:
+    image: docker.io/nginxinc/nginx-unprivileged:stable-alpine
+    container_name: deephpi-gateway
+    restart: unless-stopped
+    depends_on: [app]
+    ports: ["${PUBLIC_BIND_ADDRESS:-127.0.0.1}:3220:3220"]
+    environment:
+      NGINX_ENVSUBST_FILTER: TRUSTED_PROXY_CIDR
+      TRUSTED_PROXY_CIDR: ${TRUSTED_PROXY_CIDR:?set TRUSTED_PROXY_CIDR}
+    volumes:
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro,Z
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+      - /etc/nginx/conf.d:size=1m,mode=0777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 50
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    mem_limit: 128m
+    networks: [frontend, egress]
+
+networks:
+  frontend:
+    internal: true
+  egress: {}

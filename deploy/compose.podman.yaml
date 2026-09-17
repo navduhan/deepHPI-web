@@ -1,0 +1,10 @@
+services:
+  app:
+    userns_mode: "keep-id"
+    environment:
+      BIOCLUSTER_SSH_KEY_PATH: /run/secrets/biocluster_key
+    volumes:
+      - ${BIOCLUSTER_KEY_FILE:?set BIOCLUSTER_KEY_FILE}:/run/secrets/biocluster_key:ro,Z
+
+x-podman:
+  in_pod: false
