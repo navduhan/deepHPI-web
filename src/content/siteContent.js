@@ -7,6 +7,25 @@ export const navigationItems = [
   { href: "/human-covid-ppi", label: "Human-COVID-PPI" },
 ];
 
+export const manuscriptCitation = {
+  authors: "Kaundal R, Loaiza CD, Duhan N, Flann N.",
+  title:
+    "deepHPI: a comprehensive deep learning platform for accurate prediction and visualization of host-pathogen protein-protein interactions.",
+  journal: "Briefings in Bioinformatics. 2022;23(3):bbac125.",
+  doi: "10.1093/bib/bbac125",
+  doiUrl: "https://doi.org/10.1093/bib/bbac125",
+  pubmedUrl: "https://pubmed.ncbi.nlm.nih.gov/35511057/",
+};
+
+export const serviceLimits = [
+  { label: "Host sequences", value: "500", note: "maximum per job" },
+  { label: "Pathogen sequences", value: "500", note: "maximum per job" },
+  { label: "Candidate pairs", value: "10,000", note: "full screen or pairwise list" },
+  { label: "Combined input", value: "2 million", note: "sequence characters" },
+  { label: "Single sequence", value: "50,000", note: "characters maximum" },
+  { label: "Accession fetch", value: "100", note: "maximum per request" },
+];
+
 export const featureOptions = [
   {
     id: "best",

@@ -3,6 +3,7 @@ import { NetworkGraph } from "./components/NetworkGraph";
 import { ResultsTable } from "./components/ResultsTable";
 import { RouteLink } from "./components/AppShell";
 import { SubmissionWorkspace } from "./components/SubmissionWorkspace";
+import { ManuscriptCitation, ServiceLimits } from "./components/ServiceInformation";
 import {
   aboutParagraphs,
   covidProteins,
@@ -251,6 +252,8 @@ export function HomePage({ navigate }) {
           </p>
         </div>
       </div>
+
+      <ManuscriptCitation />
     </PageFrame>
   );
 }
@@ -333,6 +336,8 @@ export function HelpPage() {
       contentClassName="max-w-none"
       detailClassName="max-w-5xl"
     >
+      <ServiceLimits />
+
       <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-4">
           {helpSections.map((section) => (

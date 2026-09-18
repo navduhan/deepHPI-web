@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import { demoByModel, featureOptions, modelOptions } from "../content/siteContent";
+import { demoByModel, featureOptions, modelOptions, serviceLimits } from "../content/siteContent";
 import { api } from "../lib/api";
 import TurnstileWidget from "./TurnstileWidget";
+import { ManuscriptCitation } from "./ServiceInformation";
 
 function countFastaBlocks(text) {
   return text
@@ -138,7 +139,7 @@ function HelpModal({ open, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#102843]/45 px-4 py-6">
-      <div className="paper-panel atlas-ring w-full max-w-2xl rounded-[1.5rem] p-5 md:p-6">
+      <div className="paper-panel atlas-ring max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[1.5rem] p-5 md:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-cobalt">Submission help</p>
@@ -177,6 +178,23 @@ function HelpModal({ open, onClose }) {
             <p className="mt-2 text-sm leading-7 text-ink/80">
               Use <strong>Sensitive</strong> for more exhaustive screening or <strong>Faster</strong> for quicker runs with a lighter descriptor profile.
             </p>
+          </div>
+        </div>
+
+        <div className="mt-5 border-t border-ink/12 pt-5">
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-cobalt">Submission limits</p>
+          <h4 className="mt-2 text-xl font-semibold text-ink">Current limits for one prediction job</h4>
+          <p className="mt-2 text-sm leading-6 text-ink/72">
+            The full host-by-pathogen screen and an uploaded pairwise list are each limited to 10,000 candidate pairs.
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-3">
+            {serviceLimits.map((limit) => (
+              <div key={limit.label} className="rounded-[0.9rem] border border-ink/12 bg-white px-3 py-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink/62">{limit.label}</p>
+                <p className="mt-1 text-lg font-semibold text-ink">{limit.value}</p>
+                <p className="mt-1 text-xs leading-5 text-ink/68">{limit.note}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -311,8 +329,8 @@ export function SubmissionWorkspace({ navigate }) {
                 type="button"
                 onClick={() => setShowHelp(true)}
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/14 bg-white text-sm font-semibold text-ink transition hover:border-panel/38 hover:text-panel"
-                aria-label="Open input guide"
-                title="Open input guide"
+                aria-label="Open submission guide and limits"
+                title="Submission guide and limits"
               >
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-panel text-xs font-bold text-white">
                   i
@@ -534,6 +552,10 @@ export function SubmissionWorkspace({ navigate }) {
           </section>
         </div>
       </form>
+
+      <div className="mt-4">
+        <ManuscriptCitation compact />
+      </div>
     </>
   );
 }
