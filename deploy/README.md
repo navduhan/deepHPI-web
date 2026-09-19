@@ -96,9 +96,3 @@ failed jobs when accepting new work. The included cleanup script provides a seco
 ```
 
 Install it in the crontab of the same unprivileged user that owns `deploy/data/jobs`, not root.
-
-## Email notifications
-
-SMTP is optional. Leave the SMTP host and sender blank to disable it. When enabled, configure the
-public URL including `/deepHPI`, the sender, relay host, TLS mode, and optional relay credentials via
-`./start.sh --setup`. Secrets remain only in the mode-0600 runtime environment file.

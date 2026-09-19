@@ -3,7 +3,6 @@ import fs from "fs/promises";
 import path from "path";
 import { DEEPHPI_CONFIG } from "./config";
 import { cleanupRemoteJob, inspectClusterJob, submitClusterJob } from "./cluster";
-import { sendJobNotification, type NotificationEvent } from "./notifications";
 
 export type JobStatus = "queued" | "running" | "completed" | "failed";
 export type JobRecord = {
@@ -19,7 +18,6 @@ export type JobRecord = {
   hostSequenceCount: number;
   pathogenSequenceCount: number;
   pairwiseCount: number;
-  email: string;
   tokenHash: string;
   ownerHash: string;
   clusterJobId: string;
@@ -29,7 +27,6 @@ export type JobRecord = {
   results?: unknown;
   network?: unknown;
   error?: string;
-  notifications?: NotificationEvent[];
 };
 
 const validJobId = /^deephpi_[a-f0-9]{32}$/;
@@ -89,15 +86,10 @@ export async function createPredictionJob(input: Omit<JobRecord, "clusterJobId" 
       jobId: input.jobId, status: "queued", message: "Job accepted by the HPC scheduler.", createdAt: now, updatedAt: now,
       model: input.model, feature: input.feature, hostInputType: input.hostInputType, pathogenInputType: input.pathogenInputType,
       hostSequenceCount: input.hostSequenceCount, pathogenSequenceCount: input.pathogenSequenceCount, pairwiseCount: input.pairwiseCount,
-      email: input.email, tokenHash: input.tokenHash, ownerHash: input.ownerHash,
+      tokenHash: input.tokenHash, ownerHash: input.ownerHash,
       clusterJobId: submitted.clusterJobId, remoteDir: submitted.remoteDir,
     };
     await writeRecord(record);
-    if (record.email) {
-      try {
-        if (await sendJobNotification(record, "submitted")) return updateRecord(record, { notifications: ["submitted"] });
-      } catch (error) { console.warn("DeepHPI submission email failed:", error); }
-    }
     return record;
   } catch (error) {
     await fs.rm(jobDirectory(input.jobId), { recursive: true, force: true });
@@ -115,19 +107,9 @@ export async function readPredictionJob(jobId: string, refresh = true) {
       status: "completed", message: "Prediction completed successfully.", stage: "Completed",
       results: state.results, network: state.network, summary: state.workerStatus.summary,
     });
-    if (record.email && !record.notifications?.includes("completed")) {
-      try {
-        if (await sendJobNotification(record, "completed")) record = await updateRecord(record, { notifications: [...(record.notifications || []), "completed"] });
-      } catch (error) { console.warn("DeepHPI completion email failed:", error); }
-    }
     void cleanupRemoteJob(record.remoteDir).catch((error) => console.warn("DeepHPI remote cleanup failed:", error));
   } else if (state.status === "failed") {
     record = await updateRecord(record, { status: "failed", message: "Prediction failed.", error: state.error });
-    if (record.email && !record.notifications?.includes("failed")) {
-      try {
-        if (await sendJobNotification(record, "failed")) record = await updateRecord(record, { notifications: [...(record.notifications || []), "failed"] });
-      } catch (error) { console.warn("DeepHPI failure email failed:", error); }
-    }
   }
   else record = await updateRecord(record, { status: state.status, message: state.status === "queued" ? "Waiting in the HPC queue." : "Prediction is running on HPC.", stage: state.state });
   return record;

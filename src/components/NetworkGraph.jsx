@@ -39,6 +39,7 @@ export function NetworkGraph({ nodes, edges, interactions = [] }) {
   const [layoutMode, setLayoutMode] = useState("cose");
   const graphRef = useRef(null);
   const cyRef = useRef(null);
+  const layoutRef = useRef(null);
 
   useEffect(() => {
     const fallbackId = network.hosts[0]?.id || network.pathogens[0]?.id || null;
@@ -116,8 +117,9 @@ export function NetworkGraph({ nodes, edges, interactions = [] }) {
             "background-color": (element) =>
               element.data("type") === "host" ? HOST_COLOR : PATHOGEN_COLOR,
             color: "#0f2740",
-            "font-family": "ui-monospace, SFMono-Regular, Menlo, monospace",
-            "font-size": 9,
+            "font-family": "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif",
+            "font-size": 10,
+            "font-weight": 600,
             "text-wrap": "none",
             "text-valign": "top",
             "text-halign": "center",
@@ -177,9 +179,39 @@ export function NetworkGraph({ nodes, edges, interactions = [] }) {
     });
 
     cyRef.current = cy;
+
+    let resizeFrame = null;
+    const resizeGraph = () => {
+      if (resizeFrame !== null) {
+        cancelAnimationFrame(resizeFrame);
+      }
+      resizeFrame = requestAnimationFrame(() => {
+        if (cyRef.current !== cy || cy.destroyed()) {
+          return;
+        }
+        cy.resize();
+        cy.fit(cy.elements(), 48);
+      });
+    };
+    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resizeGraph);
+    resizeObserver?.observe(graphRef.current);
+    window.addEventListener("resize", resizeGraph);
+
     return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", resizeGraph);
+      if (resizeFrame !== null) {
+        cancelAnimationFrame(resizeFrame);
+      }
+      if (layoutRef.current) {
+        layoutRef.current.stop();
+        layoutRef.current = null;
+      }
+      cy.stop(true, true);
+      if (cyRef.current === cy) {
+        cyRef.current = null;
+      }
       cy.destroy();
-      cyRef.current = null;
     };
   }, [network.edges, visibleNodes]);
 
@@ -192,7 +224,7 @@ export function NetworkGraph({ nodes, edges, interactions = [] }) {
     const layoutByMode = {
       cose: {
         name: "cose",
-        animate: true,
+        animate: false,
         fit: true,
         padding: 56,
         idealEdgeLength: 120,
@@ -202,7 +234,7 @@ export function NetworkGraph({ nodes, edges, interactions = [] }) {
       },
       concentric: {
         name: "concentric",
-        animate: true,
+        animate: false,
         fit: true,
         padding: 56,
         minNodeSpacing: 18,
@@ -211,13 +243,13 @@ export function NetworkGraph({ nodes, edges, interactions = [] }) {
       },
       circle: {
         name: "circle",
-        animate: true,
+        animate: false,
         fit: true,
         padding: 56,
       },
       breadthfirst: {
         name: "breadthfirst",
-        animate: true,
+        animate: false,
         fit: true,
         padding: 56,
         directed: false,
@@ -225,16 +257,27 @@ export function NetworkGraph({ nodes, edges, interactions = [] }) {
       },
       grid: {
         name: "grid",
-        animate: true,
+        animate: false,
         fit: true,
         padding: 56,
         avoidOverlap: true,
       },
     };
 
-    const layout = layoutByMode[layoutMode] || layoutByMode.cose;
+    const layoutOptions = layoutByMode[layoutMode] || layoutByMode.cose;
+    layoutRef.current?.stop();
+    const layout = cy.layout(layoutOptions);
+    layoutRef.current = layout;
+    layout.run();
 
-    cy.layout(layout).run();
+    return () => {
+      if (!cy.destroyed()) {
+        layout.stop();
+      }
+      if (layoutRef.current === layout) {
+        layoutRef.current = null;
+      }
+    };
   }, [layoutMode, network]);
 
   useEffect(() => {
@@ -259,7 +302,7 @@ export function NetworkGraph({ nodes, edges, interactions = [] }) {
 
   const exportImage = () => {
     const cy = cyRef.current;
-    if (!cy) {
+    if (!cy || cy.destroyed()) {
       return;
     }
 
@@ -356,7 +399,10 @@ export function NetworkGraph({ nodes, edges, interactions = [] }) {
           </div>
 
           <div className="bg-white/72 p-3">
-            <div ref={graphRef} className="h-[760px] w-full rounded-[1.4rem] border border-ink/12 bg-white" />
+            <div
+              ref={graphRef}
+              className="h-[520px] w-full rounded-[1.4rem] border border-ink/12 bg-white sm:h-[620px] lg:h-[720px] xl:h-[760px]"
+            />
           </div>
         </div>
 

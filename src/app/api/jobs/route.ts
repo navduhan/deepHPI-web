@@ -26,11 +26,9 @@ export async function POST(req: NextRequest) {
     const feature = typeof body.feature === "string" ? body.feature : "best";
     const hostInputType = body.hostInputType as FastaType;
     const pathogenInputType = body.pathogenInputType as FastaType;
-    const email = typeof body.email === "string" ? body.email.trim() : "";
     if (!["PP", "HBP", "HVP", "AP"].includes(model)) throw new RequestSecurityError("Unsupported DeepHPI model family.", 400);
     if (!["best", "fast"].includes(feature)) throw new RequestSecurityError("Unsupported prediction mode.", 400);
     if (!["protein", "nucleotide"].includes(hostInputType) || !["protein", "nucleotide"].includes(pathogenInputType)) throw new RequestSecurityError("Host and pathogen input types must be selected.", 400);
-    if (email && (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) throw new RequestSecurityError("Notification email is invalid.", 400);
     const host = validateFasta(hostInput, "Host", hostInputType);
     const pathogen = validateFasta(pathogenInput, "Pathogen", pathogenInputType);
     if (host.residues + pathogen.residues > REQUEST_LIMITS.totalResidues) throw new RequestSecurityError("The combined host and pathogen input exceeds the total residue limit.", 400);
@@ -41,7 +39,7 @@ export async function POST(req: NextRequest) {
     const jobId = `deephpi_${crypto.randomUUID().replaceAll("-", "")}`;
     const jobToken = crypto.randomBytes(32).toString("base64url");
     const job = await createPredictionJob({
-      jobId, hostInput, pathogenInput, pairwiseInput, model, feature, hostInputType, pathogenInputType, email,
+      jobId, hostInput, pathogenInput, pairwiseInput, model, feature, hostInputType, pathogenInputType,
       hostSequenceCount: host.count, pathogenSequenceCount: pathogen.count, pairwiseCount,
       tokenHash: hashJobToken(jobToken), ownerHash: ownerHash(ip),
     });

@@ -21,33 +21,47 @@ function readLocalFile(file, onLoad) {
   reader.readAsText(file);
 }
 
-function ModelCard({ option, active, onClick }) {
+function FeatureCard({ option, active, onClick }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-[0.9rem] border px-4 py-3 text-left transition ${
+    <label
+      className={`flex cursor-pointer items-center gap-2.5 rounded-[0.9rem] border px-3 py-3 text-left transition ${
         active
-          ? "border-cobalt bg-cobalt/6 text-ink shadow-[inset_0_0_0_1px_rgba(22,98,196,0.16)]"
-          : "border-ink/14 bg-white hover:border-cobalt/28"
+          ? "border-cobalt bg-[#eef5fb] text-cobalt shadow-[inset_0_0_0_1px_rgba(34,95,153,0.08)]"
+          : "border-ink/14 bg-white text-ink hover:border-cobalt/30"
       }`}
     >
-      <h3 className="text-base font-semibold">{option.label}</h3>
-    </button>
+      <input type="radio" name="prediction-mode" value={option.id} checked={active} onChange={onClick} className="h-4 w-4 shrink-0 accent-[#225f99]" />
+      <span className="text-sm font-semibold">{option.label}</span>
+    </label>
   );
 }
 
-function FeatureCard({ option, active, onClick }) {
+function InputTypeSelector({ label, name, value, onChange }) {
+  const options = [
+    { id: "protein", shortLabel: "AA", label: "Amino acid" },
+    { id: "nucleotide", shortLabel: "NT", label: "Nucleotide" },
+  ];
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-[0.9rem] border px-4 py-3 text-left transition ${
-        active ? "border-cobalt bg-cobalt text-white" : "border-ink/14 bg-white hover:border-cobalt/28"
-      }`}
-    >
-      <p className="text-sm font-semibold">{option.label}</p>
-    </button>
+    <fieldset className="min-w-0">
+      <legend className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink/55">{label}</legend>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        {options.map((option) => (
+          <label
+            key={option.id}
+            title={option.label}
+            className={`flex cursor-pointer items-center justify-center gap-2 rounded-[0.8rem] border px-2 py-3 text-xs font-bold transition ${
+              value === option.id
+                ? "border-cobalt bg-[#eef5fb] text-cobalt"
+                : "border-ink/14 bg-white text-ink hover:border-cobalt/30"
+            }`}
+          >
+            <input type="radio" name={name} value={option.id} checked={value === option.id} onChange={() => onChange(option.id)} className="h-4 w-4 shrink-0 accent-[#225f99]" />
+            <span>{option.shortLabel}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
   );
 }
 
@@ -72,14 +86,14 @@ function AccessionFetcher({ tone, onLoad }) {
   };
 
   return (
-    <div className="mt-3 rounded-[0.9rem] border border-ink/12 bg-paper/70 p-3">
+    <div className="mt-3 rounded-[0.9rem] border border-ink/12 bg-[#f5f7f8] p-3">
       <div className="grid gap-2 md:grid-cols-[120px_minmax(0,1fr)_auto]">
         <select value={database} onChange={(event) => setDatabase(event.target.value)} className="rounded-[0.75rem] border border-ink/14 bg-white px-3 py-2 text-sm outline-none">
           <option value="uniprot">UniProt</option>
           <option value="ncbi">NCBI Protein</option>
         </select>
         <input value={accessions} onChange={(event) => setAccessions(event.target.value)} className="rounded-[0.75rem] border border-ink/14 bg-white px-3 py-2 font-mono text-sm outline-none" placeholder="Accessions separated by spaces or commas" />
-        <button type="button" disabled={loading || !accessions.trim()} onClick={fetchAccessions} className={`rounded-full px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 ${tone === "pathogen" ? "bg-[#d46a57]" : "bg-panel"}`}>
+        <button type="button" disabled={loading || !accessions.trim()} onClick={fetchAccessions} className={`rounded-full px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50 ${tone === "pathogen" ? "bg-[#d46a57] hover:bg-[#bb5947]" : "bg-panel hover:bg-cobalt"}`}>
           {loading ? "Fetching..." : "Fetch"}
         </button>
       </div>
@@ -92,19 +106,17 @@ function SequencePanel({ value, onChange, onFileLoad, onAccessionLoad, placehold
   const toneClasses =
     tone === "pathogen"
       ? {
-          badge: "bg-[#fff0ec] text-[#c85a45]",
           border: "focus:border-[#d46a57]",
         }
       : {
-          badge: "bg-[#edf5ff] text-cobalt",
-          border: "focus:border-cobalt",
+          border: "focus:border-[#617b88]",
         };
 
   return (
     <div className="rounded-[1.1rem] border border-ink/14 bg-white p-3">
       <div className="flex flex-wrap gap-2">
         <label className={`cursor-pointer rounded-full px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition ${
-          tone === "pathogen" ? "bg-[#d46a57] hover:bg-[#bf5947]" : "bg-panel hover:bg-[#225c8f]"
+          tone === "pathogen" ? "bg-[#d46a57] hover:bg-[#bf5947]" : "bg-panel hover:bg-cobalt"
         }`}>
           Upload FASTA
           <input
@@ -114,16 +126,14 @@ function SequencePanel({ value, onChange, onFileLoad, onAccessionLoad, placehold
             onChange={(event) => readLocalFile(event.target.files?.[0], onFileLoad)}
           />
         </label>
-        <span className={`rounded-full border border-ink/14 px-4 py-2.5 text-sm ${toneClasses.badge}`}>
-          Paste FASTA below
-        </span>
+        <span className="self-center text-sm text-ink/58">or paste FASTA below</span>
       </div>
 
       <textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className={`mt-3 w-full rounded-[0.9rem] border border-ink/14 bg-white px-4 py-3 font-mono text-sm leading-6 text-ink outline-none transition focus:bg-white ${toneClasses.border} ${
-          compact ? "min-h-[152px]" : "min-h-[178px]"
+          compact ? "min-h-[132px]" : "min-h-[164px]"
         }`}
         placeholder={placeholder}
       />
@@ -210,7 +220,6 @@ export function SubmissionWorkspace({ navigate }) {
   const [hostInput, setHostInput] = useState("");
   const [pathogenInput, setPathogenInput] = useState("");
   const [pairwiseInput, setPairwiseInput] = useState("");
-  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -269,7 +278,6 @@ export function SubmissionWorkspace({ navigate }) {
     setHostInput("");
     setPathogenInput("");
     setPairwiseInput("");
-    setEmail("");
     setError("");
     setHostInputType("protein");
     setPathogenInputType("protein");
@@ -294,7 +302,6 @@ export function SubmissionWorkspace({ navigate }) {
         hostInput,
         pathogenInput,
         pairwiseInput,
-        email,
         model,
         feature,
         hostInputType,
@@ -315,242 +322,134 @@ export function SubmissionWorkspace({ navigate }) {
     <>
       <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
 
-      <form onSubmit={onSubmit} className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-4">
-          <section className="paper-panel atlas-ring rounded-[1.35rem] p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <h2 className="text-[1.85rem] font-semibold text-ink">Host FASTA</h2>
-                <div className="rounded-full border border-cobalt/12 bg-cobalt/6 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-cobalt">
-                  {hostCount} sequence{hostCount === 1 ? "" : "s"}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowHelp(true)}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/14 bg-white text-sm font-semibold text-ink transition hover:border-panel/38 hover:text-panel"
-                aria-label="Open submission guide and limits"
-                title="Submission guide and limits"
-              >
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-panel text-xs font-bold text-white">
-                  i
-                </span>
-              </button>
-            </div>
-            <div className="mt-3">
-              <SequencePanel
-                value={hostInput}
-                onChange={(value) => { setHostInput(value); setLoadedDemoModel(null); }}
-                onFileLoad={changeHostInput}
-                onAccessionLoad={changeHostInput}
-                placeholder=">host_protein_1"
-                compact
-                tone="host"
-              />
-            </div>
-          </section>
-
-          <section className="paper-panel atlas-ring rounded-[1.35rem] p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <h2 className="text-[1.85rem] font-semibold text-ink">Pathogen FASTA</h2>
-                <div className="rounded-full border border-[#d46a57]/18 bg-[#fff0ec] px-3 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-[#c85a45]">
-                  {pathogenCount} sequence{pathogenCount === 1 ? "" : "s"}
-                </div>
-              </div>
-            </div>
-            <div className="mt-3">
-              <SequencePanel
-                value={pathogenInput}
-                onChange={(value) => { setPathogenInput(value); setLoadedDemoModel(null); }}
-                onFileLoad={changePathogenInput}
-                onAccessionLoad={changePathogenInput}
-                placeholder=">pathogen_protein_1"
-                compact
-                tone="pathogen"
-              />
-            </div>
-          </section>
-
-          <section className="paper-panel atlas-ring rounded-[1.35rem] p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <h2 className="text-[1.6rem] font-semibold text-ink">Pairwise restriction</h2>
-                <div className="rounded-full border border-cobalt/12 bg-cobalt/6 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-cobalt">
-                  {pairwiseCount} pairs
-                </div>
-              </div>
-              <label className="cursor-pointer rounded-full border border-ink/12 bg-white px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink transition hover:border-cobalt/24">
-                Upload Pairwise File
-                <input
-                  type="file"
-                  accept=".tsv,.txt,.tab"
-                  className="hidden"
-                  onChange={(event) => readLocalFile(event.target.files?.[0], setPairwiseInput)}
-                />
-              </label>
-            </div>
-
-            <textarea
-              value={pairwiseInput}
-              onChange={(event) => setPairwiseInput(event.target.value)}
-              className="mt-3 min-h-[116px] w-full rounded-[0.95rem] border border-ink/14 bg-white px-4 py-3 font-mono text-sm leading-6 outline-none transition focus:border-cobalt"
-              placeholder={"host_protein_1\tpathogen_protein_1"}
-            />
-          </section>
+      <section className="paper-panel atlas-ring relative overflow-hidden rounded-[1.5rem] border-l-4 border-l-cobalt px-5 py-4 md:px-6 md:py-5">
+        <div className="relative flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-cobalt">Prediction workspace</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-ink md:text-3xl">New DeepHPI prediction</h1>
+          </div>
+          <p className="max-w-xl text-sm leading-6 text-ink/62">Add both sequence sets, choose the matching model, and submit one prediction job.</p>
         </div>
+      </section>
 
-        <div className="space-y-4 xl:sticky xl:top-6 xl:self-start">
-          <section className="paper-panel atlas-ring rounded-[1.35rem] p-4">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-[1.85rem] font-semibold text-ink">Prediction settings</h2>
-            </div>
-
-            <div className="mt-4">
-              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-cobalt">Model family</p>
-              <div className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-1">
-                {modelOptions.map((option) => (
-                  <ModelCard
-                    key={option.id}
-                    option={option}
-                    active={model === option.id}
-                    onClick={() => changeModel(option.id)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-cobalt">Prediction mode</p>
-              <div className="mt-2 grid gap-2 md:grid-cols-2">
-                {featureOptions.map((option) => (
-                  <FeatureCard
-                    key={option.id}
-                    option={option}
-                    active={feature === option.id}
-                    onClick={() => setFeature(option.id)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <form onSubmit={onSubmit} className="mt-4 space-y-4">
+          <section className="paper-panel atlas-ring rounded-[1.5rem] p-4 md:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-cobalt">Host input</p>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  {[
-                    ["protein", "AA"],
-                    ["nucleotide", "NT"],
-                  ].map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setHostInputType(value)}
-                      className={`rounded-[0.9rem] border px-4 py-3 text-sm font-semibold transition ${
-                        hostInputType === value
-                          ? "border-cobalt bg-cobalt/6 text-cobalt"
-                          : "border-ink/14 bg-white text-ink hover:border-cobalt/28"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-cobalt">01 / Input</p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-[-0.02em] text-ink">Host and pathogen sequences</h2>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={loadDemo} className="rounded-full bg-panel px-4 py-2 text-xs font-bold text-white transition hover:bg-cobalt">
+                  Load {activeModel?.tag} demo
+                </button>
+                <button type="button" onClick={() => setShowHelp(true)} className="rounded-full border border-ink/14 bg-white px-4 py-2 text-xs font-bold text-ink transition hover:border-cobalt/35" aria-label="Open submission guide and limits">
+                  ⓘ Guide & limits
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 xl:grid-cols-2">
+              <div className="rounded-[1.1rem] border border-ink/12 border-t-[3px] border-t-cobalt bg-white p-3 md:p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-lg font-semibold text-ink">Host FASTA</h3>
+                  <span className="font-mono text-[11px] font-bold text-cobalt">{hostCount} sequence{hostCount === 1 ? "" : "s"}</span>
+                </div>
+                <div className="mt-2">
+                  <SequencePanel value={hostInput} onChange={(value) => { setHostInput(value); setLoadedDemoModel(null); }} onFileLoad={changeHostInput} onAccessionLoad={changeHostInput} placeholder=">host_protein_1" compact tone="host" />
                 </div>
               </div>
 
-              <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-cobalt">Pathogen input</p>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  {[
-                    ["protein", "AA"],
-                    ["nucleotide", "NT"],
-                  ].map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setPathogenInputType(value)}
-                      className={`rounded-[0.9rem] border px-4 py-3 text-sm font-semibold transition ${
-                        pathogenInputType === value
-                          ? "border-[#d46a57] bg-[#fff0ec] text-[#c85a45]"
-                          : "border-ink/14 bg-white text-ink hover:border-[#d46a57]/28"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
+              <div className="rounded-[1.1rem] border border-ink/12 border-t-[3px] border-t-[#d46a57] bg-white p-3 md:p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-lg font-semibold text-ink">Pathogen FASTA</h3>
+                  <span className="font-mono text-[11px] font-bold text-[#c85a45]">{pathogenCount} sequence{pathogenCount === 1 ? "" : "s"}</span>
+                </div>
+                <div className="mt-2">
+                  <SequencePanel value={pathogenInput} onChange={(value) => { setPathogenInput(value); setLoadedDemoModel(null); }} onFileLoad={changePathogenInput} onAccessionLoad={changePathogenInput} placeholder=">pathogen_protein_1" compact tone="pathogen" />
                 </div>
               </div>
-            </div>
-
-            <div className="mt-4">
-              <label className="block">
-                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-cobalt">Notification email</p>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="mt-2 w-full rounded-[0.95rem] border border-ink/14 bg-white px-4 py-3 text-sm outline-none transition focus:border-cobalt"
-                  placeholder="name@institute.edu"
-                />
-              </label>
             </div>
           </section>
 
-          <section className="paper-panel atlas-ring rounded-[1.35rem] p-4">
-            <div className="grid gap-2 md:grid-cols-2">
-              <div className="rounded-[0.95rem] border border-ink/14 bg-paper px-4 py-3">
-                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/70">Model family</p>
-                <p className="mt-1 text-sm font-semibold text-ink">{activeModel?.label}</p>
+          <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(350px,0.65fr)]">
+          <section className="paper-panel atlas-ring flex h-full flex-col rounded-[1.5rem] p-4 md:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <span className="inline-flex rounded-full border border-cobalt/20 bg-[#eef5fb] px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-cobalt">Optional</span>
+                <h2 className="mt-2 text-xl font-semibold text-ink">Pairwise restriction</h2>
               </div>
-              <div className="rounded-[0.95rem] border border-ink/14 bg-paper px-4 py-3">
-                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/70">Prediction mode</p>
-                <p className="mt-1 text-sm font-semibold text-ink">{activeFeature?.label}</p>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[11px] text-ink/65">{pairwiseCount} pairs</span>
+                <label className="cursor-pointer rounded-full border border-ink/14 bg-white px-4 py-2 text-xs font-bold text-ink transition hover:border-cobalt/35">
+                  Upload list
+                  <input type="file" accept=".tsv,.txt,.tab" className="hidden" onChange={(event) => readLocalFile(event.target.files?.[0], setPairwiseInput)} />
+                </label>
               </div>
-              <div className="rounded-[0.95rem] border border-ink/14 bg-paper px-4 py-3">
-                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/70">Host sequences</p>
-                <p className="mt-1 text-sm font-semibold text-ink">{hostCount} ({hostInputType === "protein" ? "AA" : "NT"})</p>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-ink/65">Leave blank to screen all submitted combinations, or provide tab-separated host and pathogen identifiers.</p>
+            <textarea value={pairwiseInput} onChange={(event) => setPairwiseInput(event.target.value)} className="mt-3 min-h-[150px] w-full flex-1 rounded-[0.9rem] border border-ink/14 bg-white px-4 py-3 font-mono text-sm leading-6 text-ink outline-none transition focus:border-cobalt" placeholder={"host_protein_1\tpathogen_protein_1"} />
+
+            <fieldset className="mt-4 border-t border-ink/12 pt-4">
+              <legend className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink/58">Model family</legend>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {modelOptions.map((option) => (
+                  <label
+                    key={option.id}
+                    className={`flex cursor-pointer items-center gap-2.5 rounded-[0.85rem] border px-3 py-3 text-left text-sm font-semibold transition ${
+                      model === option.id
+                        ? "border-cobalt bg-[#eef5fb] text-cobalt shadow-[inset_0_0_0_1px_rgba(34,95,153,0.08)]"
+                        : "border-ink/14 bg-white text-ink hover:border-cobalt/30"
+                    }`}
+                  >
+                    <input type="radio" name="model-family" value={option.id} checked={model === option.id} onChange={() => changeModel(option.id)} className="h-4 w-4 shrink-0 accent-[#225f99]" />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
               </div>
-              <div className="rounded-[0.95rem] border border-ink/14 bg-paper px-4 py-3">
-                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink/70">Pathogen sequences</p>
-                <p className="mt-1 text-sm font-semibold text-ink">{pathogenCount} ({pathogenInputType === "protein" ? "AA" : "NT"})</p>
+            </fieldset>
+          </section>
+
+        <aside className="min-w-0">
+          <section className="paper-panel atlas-ring flex h-full flex-col rounded-[1.5rem] p-4 md:p-5">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-cobalt">02 / Configuration</p>
+            <h2 className="mt-1 text-xl font-semibold text-ink">Prediction settings</h2>
+
+            <div className="mt-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/55">Prediction mode</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {featureOptions.map((option) => <FeatureCard key={option.id} option={option} active={feature === option.id} onClick={() => setFeature(option.id)} />)}
               </div>
             </div>
 
-            {error ? (
-              <div className="mt-3 rounded-[0.95rem] border border-crimson/20 bg-crimson/8 px-4 py-3 text-sm text-crimson">
-                {error}
+            <div className="mt-4 grid grid-cols-2 gap-3 border-t border-ink/12 pt-4">
+              <InputTypeSelector label="Host type" name="host-input-type" value={hostInputType} onChange={setHostInputType} />
+              <InputTypeSelector label="Pathogen type" name="pathogen-input-type" value={pathogenInputType} onChange={setPathogenInputType} />
+            </div>
+            <div className="mt-auto border-t border-ink/12 pt-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-cobalt">03 / Run</p>
+                <h2 className="mt-1 text-xl font-semibold text-ink">Review & submit</h2>
               </div>
-            ) : null}
-
+              <span className="rounded-full border border-ink/12 bg-white px-3 py-1.5 font-mono text-[10px] text-ink/68">{activeModel?.tag} · {activeFeature?.label}</span>
+            </div>
+            <p className="mt-3 text-sm text-ink/68">{hostCount} host × {pathogenCount} pathogen{pairwiseCount ? ` · ${pairwiseCount} selected pairs` : ""}</p>
+            {error ? <div className="mt-3 rounded-[0.9rem] border border-[#c85a45]/25 bg-[#fff0ec] px-4 py-3 text-sm text-[#8e3f31]" role="alert">{error}</div> : null}
             <div className="mt-4">
               <TurnstileWidget siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""} onToken={setTurnstileToken} resetKey={turnstileResetKey} />
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
+                <button type="button" onClick={clearForm} className="rounded-full border border-ink/16 bg-white px-5 py-3.5 text-sm font-bold text-ink transition hover:border-ink/35">Clear</button>
+                <button type="submit" disabled={submitting} className="w-full rounded-full bg-panel px-5 py-3.5 text-sm font-bold text-white transition hover:bg-cobalt disabled:cursor-not-allowed disabled:opacity-60">
+                  {submitting ? "Submitting prediction..." : "Run prediction"}
+                </button>
+              </div>
             </div>
-
-            <div className="mt-4 grid gap-2 md:grid-cols-3">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="rounded-full bg-panel px-5 py-3 text-sm font-semibold text-white transition hover:bg-cobalt disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {submitting ? "Submitting..." : "Run Prediction"}
-              </button>
-              <button
-                type="button"
-                onClick={loadDemo}
-                className="rounded-full border border-cobalt/24 bg-white px-5 py-3 text-sm font-semibold text-cobalt transition hover:border-cobalt hover:bg-cobalt/6"
-              >
-                Load Demo
-              </button>
-              <button
-                type="button"
-                onClick={clearForm}
-                className="rounded-full border border-[#d4634f]/24 bg-[#fff2ee] px-5 py-3 text-sm font-semibold text-[#b64b39] transition hover:border-[#d4634f]/40 hover:bg-[#ffe7e1]"
-              >
-                Clear
-              </button>
+            <p className="mt-3 text-xs leading-5 text-ink/55">A private results link is created when the job is accepted.</p>
             </div>
           </section>
-        </div>
+        </aside>
+          </div>
       </form>
 
       <div className="mt-4">

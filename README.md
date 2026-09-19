@@ -75,7 +75,7 @@ separate internal and egress networks.
 - Up to 500 host and 500 pathogen sequences are accepted per job by default. No more than 10,000
   pairs are evaluated unless the deployment administrator explicitly raises the pair ceiling.
 - Pairwise rows must reference identifiers present in the submitted FASTA files.
-- Model, mode, email, job ID, and accession values are allow-listed or strictly validated.
+- Model, mode, job ID, and accession values are allow-listed or strictly validated.
 - Status, result, and network endpoints require an unguessable private job token.
 - Each model family has its own demo sequence set. Changing the model after loading a demo clears the
   old sequences so they cannot be submitted under another model accidentally.

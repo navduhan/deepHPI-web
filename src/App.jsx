@@ -105,7 +105,7 @@ export default function App() {
   } else if (route.page === "datasets") {
     page = <DatasetsPage />;
   } else if (route.page === "help") {
-    page = <HelpPage />;
+    page = <HelpPage navigate={navigate} />;
   } else if (route.page === "covid") {
     page = <CovidPage navigate={navigate} />;
   } else if (route.page === "covid-network") {
